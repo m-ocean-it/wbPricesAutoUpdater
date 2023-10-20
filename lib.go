@@ -19,17 +19,10 @@ type catalogPricing map[productId]pricePair
 type pricesUpdatePlan map[productId]price
 type discountsUpdatePlan map[productId]discount
 
-func getCurrentPrices() (catalogPricing, error) {
-	return catalogPricing{
-		1: {price: 380, discount: 10},
-		2: {price: 450, discount: 10},
-	}, nil // TODO: implement
-}
-
 func saveCurrentPrices(ctx context.Context, prices catalogPricing) error {
 	// TODO: write proper implementation
 
-	log.Printf("saving current prices: %v\n", prices)
+	// log.Printf("saving current prices: %v\n", prices)
 	time.Sleep(time.Second * 10)
 
 	if err := ctx.Err(); err != nil {
