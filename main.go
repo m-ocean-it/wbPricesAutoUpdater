@@ -13,7 +13,8 @@ func main() {
 	for {
 		currentPrices, err := getCurrentPrices()
 		if err != nil {
-			// TODO: log err
+			log.Println(err)
+			sleep()
 			continue
 		}
 
@@ -26,24 +27,31 @@ func main() {
 
 		targetPrices, err := getTargetPrices()
 		if err != nil {
-			// TODO: log err
+			log.Println(err)
+			sleep()
 			continue
 		}
 
 		pricesToSet, discountsToSet, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
 		if err != nil {
-			// TODO: log err
+			log.Println(err)
+			sleep()
 			continue
 		}
 
 		err = executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet)
 		if err != nil {
-			// TODO: log err
+			log.Println(err)
+			sleep()
 			continue
 		}
 
-		log.Println("sleeping for 10 seconds")
-		time.Sleep(time.Second * 4)
-		log.Println("===========END=OF=LOOP=============")
+		sleep()
 	}
+}
+
+func sleep() {
+	log.Println("sleeping for 10 seconds")
+	time.Sleep(time.Second * 4)
+	log.Println("===========END=OF=LOOP=============")
 }
