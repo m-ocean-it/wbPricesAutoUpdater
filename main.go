@@ -3,15 +3,25 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 )
 
+const WB_OPENAPI_AUTH_TOKEN_LABEL = "WB_OPENAPI_AUTH_TOKEN"
+
 func main() {
+	wbAuthToken := os.Getenv(WB_OPENAPI_AUTH_TOKEN_LABEL)
+	if wbAuthToken == "" {
+		log.Fatalf("%s environment variable must be set\n", WB_OPENAPI_AUTH_TOKEN_LABEL)
+	}
+
+	wbClient := NewWbOpenApiClient(wbAuthToken)
+
 	var ctx context.Context
 	cancel := func() {}
 
 	for {
-		currentPrices, err := getCurrentPrices()
+		currentPrices, err := getCurrentPrices(wbClient)
 		if err != nil {
 			log.Println(err)
 			sleep()

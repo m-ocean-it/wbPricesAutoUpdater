@@ -9,7 +9,6 @@ import (
 )
 
 const GET_PRICES_URL = "https://suppliers-api.wildberries.ru/public/api/v1/info?quantity=0"
-const authToken = ""
 
 type wbPricingItem struct {
 	NmId     uint64   `json:"nmId"`
@@ -17,8 +16,16 @@ type wbPricingItem struct {
 	Discount discount `json:"discount"`
 }
 
-func getCurrentPrices() (catalogPricing, error) {
-	pricingItems, err := fetchWbPricingItems()
+type wbOpenApiClient struct {
+	authToken string
+}
+
+func NewWbOpenApiClient(token string) wbOpenApiClient {
+	return wbOpenApiClient{token}
+}
+
+func getCurrentPrices(wbClient wbOpenApiClient) (catalogPricing, error) {
+	pricingItems, err := wbClient.fetchWbPricingItems()
 	if err != nil {
 		return catalogPricing{}, fmt.Errorf("error when obtaining current Wildberries prices: %w", err)
 	}
@@ -28,14 +35,14 @@ func getCurrentPrices() (catalogPricing, error) {
 	return pricing, nil
 }
 
-func fetchWbPricingItems() ([]wbPricingItem, error) {
+func (c wbOpenApiClient) fetchWbPricingItems() ([]wbPricingItem, error) {
 	// Prepare request
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", GET_PRICES_URL, nil)
 	if err != nil {
 		return []wbPricingItem{}, fmt.Errorf("error creating request: %w", err)
 	}
-	req.Header.Add("Authorization", "Bearer "+authToken)
+	req.Header.Add("Authorization", "Bearer "+c.authToken)
 
 	// Send request
 	response, err := client.Do(req)
