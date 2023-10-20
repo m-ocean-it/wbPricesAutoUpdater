@@ -4,7 +4,7 @@ import "context"
 
 func main() {
 	var ctx context.Context
-	var cancel context.CancelFunc
+	cancel := func() {}
 
 	for {
 		currentPrices, err := getCurrentPrices()
