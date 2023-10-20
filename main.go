@@ -26,13 +26,13 @@ func main() {
 			continue
 		}
 
-		tasks, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
+		pricesUpdatePlan, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
 		if err != nil {
 			// TODO: log err
 			continue
 		}
 
-		err = executeTasks(tasks)
+		err = executePriceUpdatePlan(pricesUpdatePlan)
 		if err != nil {
 			// TODO: log err
 			continue

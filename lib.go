@@ -2,29 +2,28 @@ package main
 
 import "context"
 
+type productId uint64
 type price uint16
 
-type task struct {
-	productId uint64
-	setPrice  price
+type productPrices map[productId]price
+type pricesUpdatePlan productPrices
+
+func getCurrentPrices() (productPrices, error) {
+	return productPrices{}, nil
 }
 
-func getCurrentPrices() ([]price, error) {
-	return []price{}, nil
-}
-
-func saveCurrentPrices(ctx context.Context, prices []price) error {
+func saveCurrentPrices(ctx context.Context, prices productPrices) error {
 	return nil
 }
 
-func getTargetPrices() ([]price, error) {
-	return []price{}, nil
+func getTargetPrices() (productPrices, error) {
+	return productPrices{}, nil
 }
 
-func compareCurrentVsTargetPrices(current []price, target []price) ([]task, error) {
-	return []task{}, nil
+func compareCurrentVsTargetPrices(current productPrices, target productPrices) (pricesUpdatePlan, error) {
+	return pricesUpdatePlan{}, nil
 }
 
-func executeTasks(tasks []task) error {
+func executePriceUpdatePlan(tasks pricesUpdatePlan) error {
 	return nil
 }
