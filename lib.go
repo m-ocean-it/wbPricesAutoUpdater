@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 	"wbPricesAutoUpdater/domain"
 )
@@ -57,9 +58,34 @@ func executePricingUpdatePlan(
 	currentCatalogPricing domain.CatalogPricing,
 	pricesToSet pricesUpdatePlan,
 	discountsToSet discountsUpdatePlan,
-) error {
-	// TODO: write proper implementation
+) []error {
+	var mu sync.Mutex
+	encounteredErrors := []error{}
 
-	log.Printf("executing plan... prices to set: %v, discounts to set: %v\n", pricesToSet, discountsToSet)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		err := updatePrices(pricesToSet)
+		if err != nil {
+			mu.Lock()
+			encounteredErrors = append(encounteredErrors, err)
+			mu.Unlock()
+		}
+		wg.Done()
+	}()
+	go func() {
+		err := updateDiscounts(discountsToSet)
+		if err != nil {
+			mu.Lock()
+			encounteredErrors = append(encounteredErrors, err)
+			mu.Unlock()
+		}
+		wg.Done()
+	}()
+	wg.Wait()
+
 	return nil
 }
+
+func updatePrices(pricesToSet pricesUpdatePlan) error          { return nil }
+func updateDiscounts(discountsToSet discountsUpdatePlan) error { return nil }

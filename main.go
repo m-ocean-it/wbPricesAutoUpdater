@@ -22,6 +22,7 @@ func main() {
 	cancel := func() {}
 
 	for {
+		// TODO: cache current prices to avoid constantly fetching them
 		currentPrices, err := getCurrentPrices(wbClient)
 		if err != nil {
 			log.Println(err)
@@ -52,9 +53,11 @@ func main() {
 			continue
 		}
 
-		err = executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet)
-		if err != nil {
-			log.Println(err)
+		errs := executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet)
+		if len(errs) > 0 {
+			for _, e := range errs {
+				log.Println(e)
+			}
 			sleep()
 			continue
 		}
