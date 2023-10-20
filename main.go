@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"time"
+	"wbPricesAutoUpdater/infrastructure"
 )
 
 const WB_OPENAPI_AUTH_TOKEN_LABEL = "WB_OPENAPI_AUTH_TOKEN"
@@ -15,7 +16,7 @@ func main() {
 		log.Fatalf("%s environment variable must be set\n", WB_OPENAPI_AUTH_TOKEN_LABEL)
 	}
 
-	wbClient := NewWbOpenApiClient(wbAuthToken)
+	wbClient := infrastructure.NewWbOpenApiClient(wbAuthToken)
 
 	var ctx context.Context
 	cancel := func() {}
@@ -27,6 +28,8 @@ func main() {
 			sleep()
 			continue
 		}
+
+		log.Printf("received current prices: %d\n", len(currentPrices))
 
 		// cancel context so that the previous instance of save_current_prices() stops execution
 		cancel()

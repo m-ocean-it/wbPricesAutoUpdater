@@ -4,22 +4,13 @@ import (
 	"context"
 	"log"
 	"time"
+	"wbPricesAutoUpdater/domain"
 )
 
-type productId uint64
-type price uint16
-type discount uint8
+type pricesUpdatePlan map[domain.ProductId]domain.Price
+type discountsUpdatePlan map[domain.ProductId]domain.Discount
 
-type pricePair struct {
-	price    price
-	discount discount
-}
-type catalogPricing map[productId]pricePair
-
-type pricesUpdatePlan map[productId]price
-type discountsUpdatePlan map[productId]discount
-
-func saveCurrentPrices(ctx context.Context, prices catalogPricing) error {
+func saveCurrentPrices(ctx context.Context, prices domain.CatalogPricing) error {
 	// TODO: write proper implementation
 
 	// log.Printf("saving current prices: %v\n", prices)
@@ -34,15 +25,14 @@ func saveCurrentPrices(ctx context.Context, prices catalogPricing) error {
 	return nil
 }
 
-func getTargetPrices() (catalogPricing, error) {
+func getTargetPrices() (domain.CatalogPricing, error) {
 	// return catalogPricing{}, nil
-	return catalogPricing{
-		1: {price: 380, discount: 10},
-		2: {price: 400, discount: 12},
+	return domain.CatalogPricing{
+		94640599: {Price: 1665, Discount: 45},
 	}, nil // TODO: implement
 }
 
-func compareCurrentVsTargetPrices(current catalogPricing, target catalogPricing) (pricesUpdatePlan, discountsUpdatePlan, error) {
+func compareCurrentVsTargetPrices(current domain.CatalogPricing, target domain.CatalogPricing) (pricesUpdatePlan, discountsUpdatePlan, error) {
 	pricesToSet := pricesUpdatePlan{}
 	discountsToSet := discountsUpdatePlan{}
 
@@ -52,11 +42,11 @@ func compareCurrentVsTargetPrices(current catalogPricing, target catalogPricing)
 			continue
 		}
 
-		if currentPricePair.price != targetPricePair.price {
-			pricesToSet[productId] = targetPricePair.price
+		if currentPricePair.Price != targetPricePair.Price {
+			pricesToSet[productId] = targetPricePair.Price
 		}
-		if currentPricePair.discount != targetPricePair.discount {
-			discountsToSet[productId] = targetPricePair.discount
+		if currentPricePair.Discount != targetPricePair.Discount {
+			discountsToSet[productId] = targetPricePair.Discount
 		}
 	}
 
@@ -64,7 +54,7 @@ func compareCurrentVsTargetPrices(current catalogPricing, target catalogPricing)
 }
 
 func executePricingUpdatePlan(
-	currentCatalogPricing catalogPricing,
+	currentCatalogPricing domain.CatalogPricing,
 	pricesToSet pricesUpdatePlan,
 	discountsToSet discountsUpdatePlan,
 ) error {
