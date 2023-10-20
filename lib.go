@@ -13,7 +13,7 @@ func getCurrentPrices() ([]price, error) {
 	return []price{}, nil
 }
 
-func save_current_prices(ctx context.Context, prices []price) error {
+func saveCurrentPrices(ctx context.Context, prices []price) error {
 	return nil
 }
 

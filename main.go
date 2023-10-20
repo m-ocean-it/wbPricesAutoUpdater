@@ -18,7 +18,7 @@ func main() {
 		// new context and cancellation func for new invocation of save_current_prices()
 		ctx, cancel = context.WithCancel(context.TODO())
 
-		go save_current_prices(ctx, currentPrices)
+		go saveCurrentPrices(ctx, currentPrices)
 
 		targetPrices, err := getTargetPrices()
 		if err != nil {
