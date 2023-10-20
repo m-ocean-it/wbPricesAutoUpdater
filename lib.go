@@ -1,29 +1,82 @@
 package main
 
-import "context"
+import (
+	"context"
+	"log"
+	"time"
+)
 
 type productId uint64
 type price uint16
+type discount uint8
 
-type productPrices map[productId]price
-type pricesUpdatePlan productPrices
+type pricePair struct {
+	price    price
+	discount discount
+}
+type catalogPricing map[productId]pricePair
 
-func getCurrentPrices() (productPrices, error) {
-	return productPrices{}, nil
+type pricesUpdatePlan map[productId]price
+type discountsUpdatePlan map[productId]discount
+
+func getCurrentPrices() (catalogPricing, error) {
+	return catalogPricing{
+		1: {price: 380, discount: 10},
+		2: {price: 450, discount: 10},
+	}, nil // TODO: implement
 }
 
-func saveCurrentPrices(ctx context.Context, prices productPrices) error {
+func saveCurrentPrices(ctx context.Context, prices catalogPricing) error {
+	// TODO: write proper implementation
+
+	log.Printf("saving current prices: %v\n", prices)
+	time.Sleep(time.Second * 10)
+
+	if err := ctx.Err(); err != nil {
+		log.Println("saving current prices was canceled")
+		return err
+	}
+
+	log.Println("saved current prices")
 	return nil
 }
 
-func getTargetPrices() (productPrices, error) {
-	return productPrices{}, nil
+func getTargetPrices() (catalogPricing, error) {
+	// return catalogPricing{}, nil
+	return catalogPricing{
+		1: {price: 380, discount: 10},
+		2: {price: 400, discount: 12},
+	}, nil // TODO: implement
 }
 
-func compareCurrentVsTargetPrices(current productPrices, target productPrices) (pricesUpdatePlan, error) {
-	return pricesUpdatePlan{}, nil
+func compareCurrentVsTargetPrices(current catalogPricing, target catalogPricing) (pricesUpdatePlan, discountsUpdatePlan, error) {
+	pricesToSet := pricesUpdatePlan{}
+	discountsToSet := discountsUpdatePlan{}
+
+	for productId, targetPricePair := range target {
+		currentPricePair, ok := current[productId]
+		if !ok {
+			continue
+		}
+
+		if currentPricePair.price != targetPricePair.price {
+			pricesToSet[productId] = targetPricePair.price
+		}
+		if currentPricePair.discount != targetPricePair.discount {
+			discountsToSet[productId] = targetPricePair.discount
+		}
+	}
+
+	return pricesToSet, discountsToSet, nil
 }
 
-func executePriceUpdatePlan(tasks pricesUpdatePlan) error {
+func executePricingUpdatePlan(
+	currentCatalogPricing catalogPricing,
+	pricesToSet pricesUpdatePlan,
+	discountsToSet discountsUpdatePlan,
+) error {
+	// TODO: write proper implementation
+
+	log.Printf("executing plan... prices to set: %v, discounts to set: %v\n", pricesToSet, discountsToSet)
 	return nil
 }

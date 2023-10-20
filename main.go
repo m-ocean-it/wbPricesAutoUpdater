@@ -1,6 +1,10 @@
 package main
 
-import "context"
+import (
+	"context"
+	"log"
+	"time"
+)
 
 func main() {
 	var ctx context.Context
@@ -26,16 +30,20 @@ func main() {
 			continue
 		}
 
-		pricesUpdatePlan, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
+		pricesToSet, discountsToSet, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
 		if err != nil {
 			// TODO: log err
 			continue
 		}
 
-		err = executePriceUpdatePlan(pricesUpdatePlan)
+		err = executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet)
 		if err != nil {
 			// TODO: log err
 			continue
 		}
+
+		log.Println("sleeping for 10 seconds")
+		time.Sleep(time.Second * 4)
+		log.Println("===========END=OF=LOOP=============")
 	}
 }
