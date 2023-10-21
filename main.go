@@ -68,6 +68,6 @@ func main() {
 
 func sleep() {
 	log.Println("sleeping for 10 seconds")
-	time.Sleep(time.Second * 4)
+	time.Sleep(time.Second * 10)
 	log.Println("===========END=OF=LOOP=============")
 }
