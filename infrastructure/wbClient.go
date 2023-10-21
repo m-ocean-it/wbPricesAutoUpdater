@@ -66,7 +66,11 @@ func (c WbOpenApiClient) FetchWbPricingItems() ([]WbPricingItem, error) {
 }
 
 func (c WbOpenApiClient) UpdatePrices(pricesToSet domain.PricesUpdatePlan) error {
-	fmt.Printf("prices to set: %v\n", pricesToSet)
+	if len(pricesToSet) == 0 {
+		log.Println("No prices to set, therefore, UpdatePrices completes successfully.")
+		return nil
+	}
+	fmt.Printf("Setting Wildberries prices: %v\n", pricesToSet)
 
 	type requestEntry struct {
 		NmId  domain.ProductId `json:"nmId"`
