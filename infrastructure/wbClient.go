@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	GET_PRICES_URL    = "https://suppliers-api.wildberries.ru/public/api/v1/info?quantity=0"
-	UPDATE_PRICES_URL = "https://suppliers-api.wildberries.ru/public/api/v1/prices"
+	GET_PRICES_URL       = "https://suppliers-api.wildberries.ru/public/api/v1/info?quantity=0"
+	UPDATE_PRICES_URL    = "https://suppliers-api.wildberries.ru/public/api/v1/prices"
+	UPDATE_DISCOUNTS_URL = "https://suppliers-api.wildberries.ru/public/api/v1/updateDiscounts"
 )
 
 type WbPricingItem struct {
@@ -123,6 +124,57 @@ func (c WbOpenApiClient) UpdatePrices(pricesToSet domain.PricesUpdatePlan) error
 }
 
 func (c WbOpenApiClient) UpdateDiscounts(discountsToSet domain.DiscountsUpdatePlan) error {
+	if len(discountsToSet) == 0 {
+		log.Println("No discounts to set, therefore, UpdateDiscounts completes successfully.")
+		return nil
+	}
+	fmt.Printf("Setting Wildberries discounts: %v\n", discountsToSet)
+
+	type requestEntry struct {
+		Nm       domain.ProductId `json:"nm"`
+		Discount domain.Discount  `json:"discount"`
+	}
+
+	requestBody := []requestEntry{}
+
+	for k, v := range discountsToSet {
+		entry := requestEntry{
+			Nm:       k,
+			Discount: v,
+		}
+
+		requestBody = append(requestBody, entry)
+	}
+
+	jsonRequestBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return fmt.Errorf("could not marshall the request data into JSON: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", UPDATE_DISCOUNTS_URL, bytes.NewBuffer(jsonRequestBody))
+	if err != nil {
+		return fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Authorization", c.authorizationHeaderValue())
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	response, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("error making request: %w", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nonOkErrorFromResponse(response)
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response body: %w", err)
+	}
+	log.Printf("Updated Wildberries discounts. Response body: %s", string(body))
+
 	return nil
 }
 
