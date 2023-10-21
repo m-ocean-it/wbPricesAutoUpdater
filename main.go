@@ -53,7 +53,7 @@ func main() {
 			continue
 		}
 
-		errs := executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet)
+		errs := executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet, wbClient)
 		if len(errs) > 0 {
 			for _, e := range errs {
 				log.Println(e)

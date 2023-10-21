@@ -6,10 +6,8 @@ import (
 	"sync"
 	"time"
 	"wbPricesAutoUpdater/domain"
+	"wbPricesAutoUpdater/infrastructure"
 )
-
-type pricesUpdatePlan map[domain.ProductId]domain.Price
-type discountsUpdatePlan map[domain.ProductId]domain.Discount
 
 func saveCurrentPrices(ctx context.Context, prices domain.CatalogPricing) error {
 	// TODO: write proper implementation
@@ -29,13 +27,13 @@ func saveCurrentPrices(ctx context.Context, prices domain.CatalogPricing) error 
 func getTargetPrices() (domain.CatalogPricing, error) {
 	// return catalogPricing{}, nil
 	return domain.CatalogPricing{
-		94640599: {Price: 1665, Discount: 45},
+		168840718: {Price: 1000, Discount: 10},
 	}, nil // TODO: implement
 }
 
-func compareCurrentVsTargetPrices(current domain.CatalogPricing, target domain.CatalogPricing) (pricesUpdatePlan, discountsUpdatePlan, error) {
-	pricesToSet := pricesUpdatePlan{}
-	discountsToSet := discountsUpdatePlan{}
+func compareCurrentVsTargetPrices(current domain.CatalogPricing, target domain.CatalogPricing) (domain.PricesUpdatePlan, domain.DiscountsUpdatePlan, error) {
+	pricesToSet := domain.PricesUpdatePlan{}
+	discountsToSet := domain.DiscountsUpdatePlan{}
 
 	for productId, targetPricePair := range target {
 		currentPricePair, ok := current[productId]
@@ -56,8 +54,9 @@ func compareCurrentVsTargetPrices(current domain.CatalogPricing, target domain.C
 
 func executePricingUpdatePlan(
 	currentCatalogPricing domain.CatalogPricing,
-	pricesToSet pricesUpdatePlan,
-	discountsToSet discountsUpdatePlan,
+	pricesToSet domain.PricesUpdatePlan,
+	discountsToSet domain.DiscountsUpdatePlan,
+	wbClient infrastructure.WbOpenApiClient,
 ) []error {
 	var mu sync.Mutex
 	encounteredErrors := []error{}
@@ -65,7 +64,7 @@ func executePricingUpdatePlan(
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
-		err := updatePrices(pricesToSet)
+		err := wbClient.UpdatePrices(pricesToSet)
 		if err != nil {
 			mu.Lock()
 			encounteredErrors = append(encounteredErrors, err)
@@ -74,7 +73,7 @@ func executePricingUpdatePlan(
 		wg.Done()
 	}()
 	go func() {
-		err := updateDiscounts(discountsToSet)
+		err := wbClient.UpdateDiscounts(discountsToSet)
 		if err != nil {
 			mu.Lock()
 			encounteredErrors = append(encounteredErrors, err)
@@ -86,6 +85,3 @@ func executePricingUpdatePlan(
 
 	return nil
 }
-
-func updatePrices(pricesToSet pricesUpdatePlan) error          { return nil }
-func updateDiscounts(discountsToSet discountsUpdatePlan) error { return nil }

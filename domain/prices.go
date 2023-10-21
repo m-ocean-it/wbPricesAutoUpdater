@@ -9,3 +9,6 @@ type PricePair struct {
 	Discount Discount
 }
 type CatalogPricing map[ProductId]PricePair
+
+type PricesUpdatePlan map[ProductId]Price
+type DiscountsUpdatePlan map[ProductId]Discount
