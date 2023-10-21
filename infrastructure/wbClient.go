@@ -97,12 +97,10 @@ func (c WbOpenApiClient) UpdatePrices(pricesToSet domain.PricesUpdatePlan) error
 		return fmt.Errorf("could not marshall the request data into JSON: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", UPDATE_PRICES_URL, bytes.NewBuffer(jsonRequestBody))
+	req, err := c.newAuthorizedJsonRequest(UPDATE_PRICES_URL, jsonRequestBody)
 	if err != nil {
-		return fmt.Errorf("error creating request: %w", err)
+		return err
 	}
-	req.Header.Set("Authorization", c.authorizationHeaderValue())
-	req.Header.Set("Content-Type", "application/json")
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
@@ -151,15 +149,12 @@ func (c WbOpenApiClient) UpdateDiscounts(discountsToSet domain.DiscountsUpdatePl
 		return fmt.Errorf("could not marshall the request data into JSON: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", UPDATE_DISCOUNTS_URL, bytes.NewBuffer(jsonRequestBody))
+	req, err := c.newAuthorizedJsonRequest(UPDATE_DISCOUNTS_URL, jsonRequestBody)
 	if err != nil {
-		return fmt.Errorf("error creating request: %w", err)
+		return err
 	}
-	req.Header.Set("Authorization", c.authorizationHeaderValue())
-	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	response, err := client.Do(req)
+	response, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
@@ -178,14 +173,19 @@ func (c WbOpenApiClient) UpdateDiscounts(discountsToSet domain.DiscountsUpdatePl
 	return nil
 }
 
-func nonOkErrorFromResponse(response *http.Response) error {
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return fmt.Errorf("received non-OK status code (%d\n) and could not read the body", response.StatusCode)
-	}
-	return fmt.Errorf("received non-OK status code (%d\n). body: %s", response.StatusCode, string(body))
-}
-
 func (c WbOpenApiClient) authorizationHeaderValue() string {
 	return "Bearer " + c.authToken
+}
+
+func (c WbOpenApiClient) newAuthorizedJsonRequest(url string, jsonBody []byte) (
+	*http.Request, error,
+) {
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, fmt.Errorf("error creating authorized JSON request: %w", err)
+	}
+	req.Header.Set("Authorization", c.authToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	return req, nil
 }
