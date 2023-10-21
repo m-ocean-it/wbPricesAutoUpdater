@@ -8,12 +8,12 @@ import (
 	"wbPricesAutoUpdater/infrastructure"
 )
 
-const WB_OPENAPI_AUTH_TOKEN_LABEL = "WB_OPENAPI_AUTH_TOKEN"
+const WB_OPENAPI_AUTH_TOKEN_ENV_VAR = "WB_OPENAPI_AUTH_TOKEN"
 
 func main() {
-	wbAuthToken := os.Getenv(WB_OPENAPI_AUTH_TOKEN_LABEL)
+	wbAuthToken := os.Getenv(WB_OPENAPI_AUTH_TOKEN_ENV_VAR)
 	if wbAuthToken == "" {
-		log.Fatalf("%s environment variable must be set\n", WB_OPENAPI_AUTH_TOKEN_LABEL)
+		log.Fatalf("%s environment variable must be set\n", WB_OPENAPI_AUTH_TOKEN_ENV_VAR)
 	}
 
 	wbClient := infrastructure.NewWbOpenApiClient(wbAuthToken)
