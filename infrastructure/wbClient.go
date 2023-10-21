@@ -23,22 +23,25 @@ type WbPricingItem struct {
 }
 
 type WbOpenApiClient struct {
-	authToken string
+	authToken  string
+	httpClient *http.Client
 }
 
-func NewWbOpenApiClient(token string) WbOpenApiClient {
-	return WbOpenApiClient{token}
+func NewWbOpenApiClient(authToken string) WbOpenApiClient {
+	return WbOpenApiClient{
+		authToken:  authToken,
+		httpClient: &http.Client{},
+	}
 }
 
 func (c WbOpenApiClient) FetchWbPricingItems() ([]WbPricingItem, error) {
-	client := &http.Client{}
 	req, err := http.NewRequest("GET", GET_PRICES_URL, nil)
 	if err != nil {
 		return []WbPricingItem{}, fmt.Errorf("error creating request: %w", err)
 	}
 	req.Header.Add("Authorization", c.authorizationHeaderValue())
 
-	response, err := client.Do(req)
+	response, err := c.httpClient.Do(req)
 	if err != nil {
 		return []WbPricingItem{}, fmt.Errorf("error when requesting current prices from Wildberries API: %w", err)
 	}
@@ -100,19 +103,14 @@ func (c WbOpenApiClient) UpdatePrices(pricesToSet domain.PricesUpdatePlan) error
 	req.Header.Set("Authorization", c.authorizationHeaderValue())
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	response, err := client.Do(req)
+	response, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			return fmt.Errorf("received non-OK status code (%d\n) and could not read the body", response.StatusCode)
-		}
-		return fmt.Errorf("received non-OK status code (%d\n). body: %s", response.StatusCode, string(body))
+		return nonOkErrorFromResponse(response)
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -126,6 +124,14 @@ func (c WbOpenApiClient) UpdatePrices(pricesToSet domain.PricesUpdatePlan) error
 
 func (c WbOpenApiClient) UpdateDiscounts(discountsToSet domain.DiscountsUpdatePlan) error {
 	return nil
+}
+
+func nonOkErrorFromResponse(response *http.Response) error {
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return fmt.Errorf("received non-OK status code (%d\n) and could not read the body", response.StatusCode)
+	}
+	return fmt.Errorf("received non-OK status code (%d\n). body: %s", response.StatusCode, string(body))
 }
 
 func (c WbOpenApiClient) authorizationHeaderValue() string {
