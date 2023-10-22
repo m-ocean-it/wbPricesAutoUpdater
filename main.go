@@ -18,10 +18,16 @@ func main() {
 
 	wbClient := infrastructure.NewWbOpenApiClient(wbAuthToken)
 
-	cancelSaveCurrentPricesFunc := func() {}
+	var ok bool
+	var cancelSaveCurrentPricesFunc func()
 
 	for {
-		cancelSaveCurrentPricesFunc = run_cycle(wbClient, cancelSaveCurrentPricesFunc)
+		ok, cancelSaveCurrentPricesFunc = run_cycle(wbClient, cancelSaveCurrentPricesFunc)
+		if ok {
+			log.Println("Cycle completed successfully")
+		} else {
+			log.Println("Cycle did not complete successfully")
+		}
 		sleep()
 	}
 }
@@ -29,13 +35,13 @@ func main() {
 func run_cycle(
 	wbClient infrastructure.WbOpenApiClient,
 	cancelSaveCurrentPricesFunc context.CancelFunc,
-) context.CancelFunc {
+) (bool, context.CancelFunc) {
 
 	// TODO: cache current prices to avoid constantly fetching them
 	currentPrices, err := getCurrentPrices(wbClient)
 	if err != nil {
 		log.Println(err)
-		return nil
+		return false, nil
 	}
 
 	log.Printf("received current prices: %d\n", len(currentPrices))
@@ -52,13 +58,13 @@ func run_cycle(
 	targetPrices, err := getTargetPrices()
 	if err != nil {
 		log.Println(err)
-		return cancelSaveCurrentPricesFunc
+		return false, cancelSaveCurrentPricesFunc
 	}
 
 	pricesToSet, discountsToSet, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
 	if err != nil {
 		log.Println(err)
-		return cancelSaveCurrentPricesFunc
+		return false, cancelSaveCurrentPricesFunc
 	}
 
 	errs := executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet, wbClient)
@@ -66,10 +72,10 @@ func run_cycle(
 		for _, e := range errs {
 			log.Println(e)
 		}
-		return cancelSaveCurrentPricesFunc
+		return false, cancelSaveCurrentPricesFunc
 	}
 
-	return cancelSaveCurrentPricesFunc
+	return true, cancelSaveCurrentPricesFunc
 }
 
 func sleep() {
