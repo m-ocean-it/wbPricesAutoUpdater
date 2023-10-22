@@ -18,52 +18,58 @@ func main() {
 
 	wbClient := infrastructure.NewWbOpenApiClient(wbAuthToken)
 
-	var ctx context.Context
-	cancel := func() {}
+	cancelSaveCurrentPricesFunc := func() {}
 
 	for {
-		// TODO: cache current prices to avoid constantly fetching them
-		currentPrices, err := getCurrentPrices(wbClient)
-		if err != nil {
-			log.Println(err)
-			sleep()
-			continue
-		}
-
-		log.Printf("received current prices: %d\n", len(currentPrices))
-
-		// cancel context so that the previous instance of save_current_prices() stops execution
-		cancel()
-		// new context and cancellation func for new invocation of save_current_prices()
-		ctx, cancel = context.WithCancel(context.TODO())
-
-		go saveCurrentPrices(ctx, currentPrices)
-
-		targetPrices, err := getTargetPrices()
-		if err != nil {
-			log.Println(err)
-			sleep()
-			continue
-		}
-
-		pricesToSet, discountsToSet, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
-		if err != nil {
-			log.Println(err)
-			sleep()
-			continue
-		}
-
-		errs := executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet, wbClient)
-		if len(errs) > 0 {
-			for _, e := range errs {
-				log.Println(e)
-			}
-			sleep()
-			continue
-		}
-
+		cancelSaveCurrentPricesFunc = run_cycle(wbClient, cancelSaveCurrentPricesFunc)
 		sleep()
 	}
+}
+
+func run_cycle(
+	wbClient infrastructure.WbOpenApiClient,
+	cancelSaveCurrentPricesFunc context.CancelFunc,
+) context.CancelFunc {
+
+	// TODO: cache current prices to avoid constantly fetching them
+	currentPrices, err := getCurrentPrices(wbClient)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	log.Printf("received current prices: %d\n", len(currentPrices))
+
+	// cancel context so that the previous instance of save_current_prices() stops execution
+	if cancelSaveCurrentPricesFunc != nil {
+		cancelSaveCurrentPricesFunc()
+	}
+	// new context and cancellation func for new invocation of save_current_prices()
+	saveCurrentPricesCtx, cancelSaveCurrentPricesFunc := context.WithCancel(context.TODO())
+
+	go saveCurrentPrices(saveCurrentPricesCtx, currentPrices)
+
+	targetPrices, err := getTargetPrices()
+	if err != nil {
+		log.Println(err)
+		return cancelSaveCurrentPricesFunc
+	}
+
+	pricesToSet, discountsToSet, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
+	if err != nil {
+		log.Println(err)
+		return cancelSaveCurrentPricesFunc
+	}
+
+	errs := executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet, wbClient)
+	if len(errs) > 0 {
+		for _, e := range errs {
+			log.Println(e)
+		}
+		return cancelSaveCurrentPricesFunc
+	}
+
+	return cancelSaveCurrentPricesFunc
 }
 
 func sleep() {

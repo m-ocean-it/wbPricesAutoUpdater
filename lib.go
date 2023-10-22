@@ -12,8 +12,8 @@ import (
 func saveCurrentPrices(ctx context.Context, prices domain.CatalogPricing) error {
 	// TODO: write proper implementation
 
-	// log.Printf("saving current prices: %v\n", prices)
-	time.Sleep(time.Second * 10)
+	log.Println("saving current prices")
+	time.Sleep(time.Second * 20)
 
 	if err := ctx.Err(); err != nil {
 		log.Println("saving current prices was canceled")
@@ -27,7 +27,7 @@ func saveCurrentPrices(ctx context.Context, prices domain.CatalogPricing) error 
 func getTargetPrices() (domain.CatalogPricing, error) {
 	// return catalogPricing{}, nil
 	return domain.CatalogPricing{
-		168840718: {Price: 1000, Discount: 10},
+		168840718: {Price: 1008, Discount: 68},
 	}, nil // TODO: implement
 }
 
