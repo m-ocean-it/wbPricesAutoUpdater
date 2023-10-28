@@ -17,7 +17,12 @@ func main() {
 		log.Fatalf("%s environment variable must be set\n", WB_OPENAPI_AUTH_TOKEN_ENV_VAR)
 	}
 
-	cache := infrastructure.NewJsonCurrentPricingCache("./pricing_cache.json")
+	cache := infrastructure.JsonCurrentPricingCache{
+		FileHandler: infrastructure.NewConcurrentFileHandler(
+			"./pricing_cache.json",
+		),
+	}
+
 	wbClient := infrastructure.NewWbOpenApiClient(wbAuthToken)
 
 	pricingServer := NewPricingServer(&cache, wbClient)
