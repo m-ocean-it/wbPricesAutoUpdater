@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 	"time"
@@ -16,13 +15,14 @@ func main() {
 		log.Fatalf("%s environment variable must be set\n", WB_OPENAPI_AUTH_TOKEN_ENV_VAR)
 	}
 
+	cache := infrastructure.NewJsonCurrentPricingCache("./pricing_cache.json")
 	wbClient := infrastructure.NewWbOpenApiClient(wbAuthToken)
 
-	var ok bool
-	var cancelSaveCurrentPricesFunc func()
+	pricingServer := NewPricingServer(&cache, wbClient)
 
+	var ok bool
 	for {
-		ok, cancelSaveCurrentPricesFunc = run_cycle(wbClient, cancelSaveCurrentPricesFunc)
+		ok = run_cycle(wbClient, pricingServer)
 		if ok {
 			log.Println("Cycle completed successfully")
 		} else {
@@ -32,39 +32,28 @@ func main() {
 	}
 }
 
-func run_cycle(
-	wbClient infrastructure.WbOpenApiClient,
-	cancelSaveCurrentPricesFunc context.CancelFunc,
-) (bool, context.CancelFunc) {
+func run_cycle(wbClient infrastructure.WbOpenApiClient, pricingServer PricingServer) bool {
 
-	// TODO: cache current prices to avoid constantly fetching them
-	currentPrices, err := getCurrentPrices(wbClient)
+	resp, err := pricingServer.FetchAndCacheCurrentPrices()
 	if err != nil {
 		log.Println(err)
-		return false, nil
+		return false
 	}
 
-	log.Printf("received current prices: %d\n", len(currentPrices))
+	currentPrices := resp.Pricing
 
-	// cancel context so that the previous instance of save_current_prices() stops execution
-	if cancelSaveCurrentPricesFunc != nil {
-		cancelSaveCurrentPricesFunc()
-	}
-	// new context and cancellation func for new invocation of save_current_prices()
-	saveCurrentPricesCtx, cancelSaveCurrentPricesFunc := context.WithCancel(context.TODO())
-
-	go saveCurrentPrices(saveCurrentPricesCtx, currentPrices)
+	log.Printf("Received prices: %d. Cache age: %s\n", len(currentPrices), resp.CacheAge)
 
 	targetPrices, err := getTargetPrices()
 	if err != nil {
 		log.Println(err)
-		return false, cancelSaveCurrentPricesFunc
+		return false
 	}
 
 	pricesToSet, discountsToSet, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
 	if err != nil {
 		log.Println(err)
-		return false, cancelSaveCurrentPricesFunc
+		return false
 	}
 
 	errs := executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet, wbClient)
@@ -72,10 +61,10 @@ func run_cycle(
 		for _, e := range errs {
 			log.Println(e)
 		}
-		return false, cancelSaveCurrentPricesFunc
+		return false
 	}
 
-	return true, cancelSaveCurrentPricesFunc
+	return true
 }
 
 func sleep() {

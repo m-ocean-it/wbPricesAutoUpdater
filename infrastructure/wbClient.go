@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 	"wbPricesAutoUpdater/domain"
 )
 
@@ -30,8 +31,10 @@ type WbOpenApiClient struct {
 
 func NewWbOpenApiClient(authToken string) WbOpenApiClient {
 	return WbOpenApiClient{
-		authToken:  authToken,
-		httpClient: &http.Client{},
+		authToken: authToken,
+		httpClient: &http.Client{
+			Timeout: 15 * time.Second,
+		},
 	}
 }
 

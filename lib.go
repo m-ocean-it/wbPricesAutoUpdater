@@ -26,9 +26,7 @@ func saveCurrentPrices(ctx context.Context, prices domain.CatalogPricing) error 
 
 func getTargetPrices() (domain.CatalogPricing, error) {
 	// return catalogPricing{}, nil
-	return domain.CatalogPricing{
-		168840718: {Price: 1008, Discount: 68},
-	}, nil // TODO: implement
+	return domain.CatalogPricing{}, nil // TODO: implement
 }
 
 func compareCurrentVsTargetPrices(current domain.CatalogPricing, target domain.CatalogPricing) (domain.PricesUpdatePlan, domain.DiscountsUpdatePlan, error) {
