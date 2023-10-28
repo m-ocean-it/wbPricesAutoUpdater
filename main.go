@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -8,6 +9,7 @@ import (
 )
 
 const WB_OPENAPI_AUTH_TOKEN_ENV_VAR = "WB_OPENAPI_AUTH_TOKEN"
+const MAX_PRICES_CACHE_AGE = 15 * time.Minute
 
 func main() {
 	wbAuthToken := os.Getenv(WB_OPENAPI_AUTH_TOKEN_ENV_VAR)
@@ -20,51 +22,51 @@ func main() {
 
 	pricingServer := NewPricingServer(&cache, wbClient)
 
-	var ok bool
+	var err error
 	for {
-		ok = run_cycle(wbClient, pricingServer)
-		if ok {
-			log.Println("Cycle completed successfully")
+		err = run_cycle(wbClient, pricingServer)
+		if err != nil {
+			log.Printf("Cycle did not complete successfully. Error: %s\n", err)
 		} else {
-			log.Println("Cycle did not complete successfully")
+			log.Println("Cycle completed successfully")
 		}
+
 		sleep()
 	}
 }
 
-func run_cycle(wbClient infrastructure.WbOpenApiClient, pricingServer PricingServer) bool {
-
+func run_cycle(wbClient infrastructure.WbOpenApiClient, pricingServer PricingServer) error {
 	resp, err := pricingServer.FetchAndCacheCurrentPrices()
 	if err != nil {
-		log.Println(err)
-		return false
+		return err
 	}
 
 	currentPrices := resp.Pricing
+	currentPricesCacheAge := resp.CacheAge
+
+	if currentPricesCacheAge > MAX_PRICES_CACHE_AGE {
+		return fmt.Errorf("prices cache too old: %s. Max value: %s",
+			currentPricesCacheAge,
+			MAX_PRICES_CACHE_AGE)
+	}
 
 	log.Printf("Received prices: %d. Cache age: %s\n", len(currentPrices), resp.CacheAge)
 
 	targetPrices, err := getTargetPrices()
 	if err != nil {
 		log.Println(err)
-		return false
+		return err
 	}
 
 	pricesToSet, discountsToSet, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
 	if err != nil {
 		log.Println(err)
-		return false
+		return err
 	}
 
-	errs := executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet, wbClient)
-	if len(errs) > 0 {
-		for _, e := range errs {
-			log.Println(e)
-		}
-		return false
-	}
+	err = executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet, wbClient)
 
-	return true
+	return err
 }
 
 func sleep() {
