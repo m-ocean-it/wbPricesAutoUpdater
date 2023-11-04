@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"time"
+	"wbPricesAutoUpdater/domain"
 	"wbPricesAutoUpdater/infrastructure"
 )
 
@@ -25,7 +26,7 @@ func main() {
 
 	wbClient := infrastructure.NewWbOpenApiClient(wbAuthToken)
 
-	pricingServer := NewPricingServer(&cache, wbClient)
+	pricingServer := infrastructure.NewPricingServer(&cache, wbClient)
 
 	var err error
 	for {
@@ -40,7 +41,7 @@ func main() {
 	}
 }
 
-func run_cycle(wbClient infrastructure.WbOpenApiClient, pricingServer PricingServer) error {
+func run_cycle(wbClient infrastructure.WbOpenApiClient, pricingServer infrastructure.PricingServer) error {
 	resp, err := pricingServer.FetchAndCacheCurrentPrices()
 	if err != nil {
 		return err
@@ -57,19 +58,19 @@ func run_cycle(wbClient infrastructure.WbOpenApiClient, pricingServer PricingSer
 
 	log.Printf("Received prices: %d. Cache age: %s\n", len(currentPrices), resp.CacheAge)
 
-	targetPrices, err := getTargetPrices()
+	targetPrices, err := infrastructure.GetTargetPrices()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	pricesToSet, discountsToSet, err := compareCurrentVsTargetPrices(currentPrices, targetPrices)
+	pricesToSet, discountsToSet, err := domain.CompareCurrentVsTargetPrices(currentPrices, targetPrices)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	err = executePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet, wbClient)
+	err = infrastructure.ExecutePricingUpdatePlan(currentPrices, pricesToSet, discountsToSet, wbClient)
 
 	return err
 }

@@ -1,14 +1,13 @@
-package main
+package infrastructure
 
 import (
 	"fmt"
 	"log"
 	"time"
 	"wbPricesAutoUpdater/domain"
-	"wbPricesAutoUpdater/infrastructure"
 )
 
-func convertWbPricingItemsToCatalogPricing(items []infrastructure.WbPricingItem) domain.CatalogPricing {
+func convertWbPricingItemsToCatalogPricing(items []WbPricingItem) domain.CatalogPricing {
 	catalog := domain.CatalogPricing{}
 	for _, item := range items {
 		catalog[domain.ProductId(item.NmId)] = domain.PricePair{
@@ -21,23 +20,23 @@ func convertWbPricingItemsToCatalogPricing(items []infrastructure.WbPricingItem)
 }
 
 type CurrentPricingCache interface {
-	GetPricing() (pricing []infrastructure.WbPricingItem, cacheAge time.Duration, err error)
-	SavePricing([]infrastructure.WbPricingItem) error
+	GetPricing() (pricing []WbPricingItem, cacheAge time.Duration, err error)
+	SavePricing([]WbPricingItem) error
 }
 
-func NewPricingServer(cache CurrentPricingCache, wbClient infrastructure.WbOpenApiClient) PricingServer {
+func NewPricingServer(cache CurrentPricingCache, wbClient WbOpenApiClient) PricingServer {
 	return PricingServer{cache, wbClient}
 }
 
 type PricingServer struct {
 	cache    CurrentPricingCache
-	wbClient infrastructure.WbOpenApiClient
+	wbClient WbOpenApiClient
 }
 
-func (ps *PricingServer) getCurrentPrices() ([]infrastructure.WbPricingItem, error) {
+func (ps *PricingServer) getCurrentPrices() ([]WbPricingItem, error) {
 	pricingItems, err := ps.wbClient.FetchWbPricingItems()
 	if err != nil {
-		return []infrastructure.WbPricingItem{}, fmt.Errorf("error when obtaining current Wildberries prices: %w", err)
+		return []WbPricingItem{}, fmt.Errorf("error when obtaining current Wildberries prices: %w", err)
 	}
 
 	return pricingItems, nil
