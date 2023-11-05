@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Product Prices</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    input[type="number"] {
+      width: 80px;
+      box-sizing: border-box;
+    }
+
+    .save-button {
+      display: inline-block;
+      padding: 6px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+  <script>
+    function handleSave(row) {
+      var sku = _getSkuFromRow(row)
+
+      var overridePrice = _getOverridePriceFromRow(row)
+      if (overridePrice === null) {
+        removeOverridePrice(sku)
+        return
+      }
+
+      updateOverridePrice(sku, overridePrice)
+    }
+
+    function updateOverridePrice(sku, price) {
+      alert(`Saving price ${price} for SKU ${sku}`);
+    }
+
+    function removeOverridePrice(sku) {
+      alert(`Removing price for SKU ${sku}`);
+    }
+
+    function manageSaveButtonAvailability(row) {
+      var overridePrice = row.querySelector('.override-mp-price')
+    }
+
+    /**
+     * @returns string
+     */
+    function _getSkuFromRow(row) {
+      var skuCell = row.querySelector('.sku-cell');
+      return skuCell.textContent
+    }
+
+    /**
+     * @returns {?number} 
+     */
+    function _getOverridePriceFromRow(row) {
+      var overridePriceInput = row.querySelector('.override-mp-price')
+      var overridePriceValue = overridePriceInput.value
+
+      if (!_isNumeric(overridePriceValue))
+        return null
+
+      return Number(overridePriceInput.value);
+    }
+
+    function _isNumeric(num) {
+      return !isNaN(num)
+    }
+  </script>
+</head>
+
+<body>
+  <table>
+    <thead>
+      <tr>
+        <th>wb_sku</th>
+        <th>mp_price</th>
+        <th>override_mp_price</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sku-cell">SKU1</td>
+        <td>19</td>
+        <td><input class="override-mp-price" type="number" step="1" value="20"></td>
+        <td><button class="save-button" onclick="handleSave(this.parentNode.parentNode)">Save</button></td>
+      </tr>
+      <tr>
+        <td class="sku-cell">SKU2</td>
+        <td>24</td>
+        <td><input class="override-mp-price" type="number" step="1" value="25"></td>
+        <td><button class="save-button" onclick="handleSave(this.parentNode.parentNode)">Save</button></td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+
+</html>
