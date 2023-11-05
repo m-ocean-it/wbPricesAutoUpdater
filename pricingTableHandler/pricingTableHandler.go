@@ -8,11 +8,11 @@ import (
 )
 
 type PricingTableHandler struct {
-	db *sqlx.DB
+	Db *sqlx.DB
 }
 
 func (p PricingTableHandler) WriteOverrideMpPrice(wbSku string, price uint) error {
-	_, err := p.db.NamedExec(`
+	_, err := p.Db.NamedExec(`
 			UPDATE pricing
 			SET override_mp_price = :override_mp_price
 			WHERE wb_sku = :wb_sku
@@ -29,7 +29,7 @@ func (p PricingTableHandler) WriteOverrideMpPrice(wbSku string, price uint) erro
 }
 
 func (p PricingTableHandler) RemoveOverrideMpPrice(wbSku string) error {
-	_, err := p.db.NamedExec(`
+	_, err := p.Db.NamedExec(`
 			UPDATE pricing
 			SET override_mp_price = NULL
 			WHERE wb_sku = :wb_sku
